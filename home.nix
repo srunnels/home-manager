@@ -2,7 +2,7 @@
 let
   editor = "emacs";
 in {
-  imports = [./zsh.nix]
+  imports = [ ./zsh.nix ];
   home = {
     packages = with pkgs; [
       # Editor(s)
@@ -12,7 +12,6 @@ in {
       aspell
       aspellDicts.en
       aspellDicts.en-computers
-      aspellDicts.fr
 
       # TODO Fonts
       # TODO Latex
@@ -28,7 +27,8 @@ in {
       fd
       fzf
       file
-      manpages
+      man-pages
+      man-pages-posix
       ripgrep
       unzip
       zip
@@ -37,62 +37,21 @@ in {
       
       # Python
       python3
-      python3Packages.black
 
-      python3Packages.pyls-black
-      python3Packages.pyls.isort
-      python3Packages.pyls-mypy
-      python3Packages.pytest
-      python3Packages.python-language-server
+      # Python Utils
+      black
+      isort
+      mypy
+
+      # Language Servers
+      pyright
+      nixd
+      # TODO complete language servers
+      # yaml-language-server
+      # bash-language-server
+      # dockerfile-language-server
     ];
 
-    programs.direnv = { enable = true; };
-
-    programs.git = {
-      enable = true;
-      package = pkgs.gitAndTools.gitFull;
-      userEmail = "srunnels@gmail.com";
-      userName = "Scott Runnels";
-      # signging.key = TODO
-      # signging.signByDefault = TODO
-      # TODO - pass helper
-      extraConfig = {
-        merge = { ff = "only"; };
-	rerere = { enabled = "true"; };
-	rebase = { autoSquash = "true"; };
-	github = { user = "srunnels"; };
-      };
-
-      ignores = [
-        "*~"
-      ];
-    };
-    # https://mynixos.com/home-manager/options/programs.gpg
-    programs.gpg.enable = true;
-    # https://mynixos.com/home-manager/options/programs.ssh
-    programs.ssh = {
-      enable = true;
-      compression = true;
-      forwardAgent = true;
-
-      matchBlocks = {
-        "Autarch" = {
-	  hostname = "192.168.1.25";
-	  port = 22;
-	};
-      };
-      extraConfig = "AddKeysToAgent yes";
-    };
-
-    services.gpg-agent = {
-      enable = true;
-      defaultCacheTtl = 86400;
-      defaultCacheTtlSsh = 86400;
-      maxCacheTtl = 86400;
-      maxCacheTtlSsh = 86400;
-      enablesshSupport = true;
-      extraConfig = allow-loopback-pinentry;
-    };
 
     # TODO - Expand upon this.
     #home.file.".gnupg/config".source = ./files/gnupg/config;
@@ -106,5 +65,61 @@ in {
       PATH = "$HOME/.local/bin:$PATH";
     };
     stateVersion = "26.05";
+  };
+  programs.direnv = { enable = true; };
+
+  programs.git = {
+    enable = true;
+    package = pkgs.gitFull;
+    # signging.key = TODO
+    # signging.signByDefault = TODO
+    # TODO - pass helper
+    settings = {
+      user.email = "srunnels@gmail.com";
+      user.name = "Scott Runnels";
+      merge = { ff = "only"; };
+	    rerere = { enabled = "true"; };
+	    rebase = { autoSquash = "true"; };
+	    github = { user = "srunnels"; };
     };
+
+    ignores = [
+      "*~"
+    ];
+  };
+  # https://mynixos.com/home-manager/options/programs.gpg
+  programs.gpg.enable = true;
+  # https://mynixos.com/home-manager/options/programs.ssh
+  programs.ssh = {
+    enable = true;
+    enableDefaultConfig = false;
+
+    # *.forwardAgent = true;
+    # TODO Not sure what to do with AddKeysToAgent
+    # extraConfig = ''
+    # AddKeysToAgent yes
+    # '';
+    
+    settings = {
+      "*" = {
+	      compression = true;
+	    };
+      "Autarch" = {
+	      hostname = "192.168.1.25";
+	      port = 22;
+	      # identifyFile = "~/.ssh/id" # TODO
+	    };
+    };
+  };
+
+  services.gpg-agent = {
+    enable = true;
+    defaultCacheTtl = 86400;
+    defaultCacheTtlSsh = 86400;
+    maxCacheTtl = 86400;
+    maxCacheTtlSsh = 86400;
+    enableSshSupport = true;
+    enableScDaemon = true;
+    extraConfig = "allow-loopback-pinentry";
+  };
 }

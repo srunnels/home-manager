@@ -1,27 +1,40 @@
-{ 
-  description = "Home Manager configs";
+{
+  description = "Home Manager configuration of srunnels";
+
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-26.05";
-
+    # Specify the source of Home Manager and Nixpkgs.
+    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     home-manager = {
-      url = "github:nix-community/home-manager/release-26.05";
-      inputs.nixpkgs.follows = "nixpkgs"; 
-
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nix-doom-emacs-unstraightened = {
+      url = "github:marienz/nix-doom-emacs-unstraightened";
+      # inputs = {
+      #     nixpkgs.follows = "";
+      # }
     };
   };
 
-  outputs = {nixpkgs, home-manager, ... }:
+  outputs = inputs @ { nixpkgs, home-manager, ... }:
     let
-      lib = nixpkgs.lib;
       system = "x86_64-linux";
-      pkgs = import nixpkgs { inherit system; };
-    in {
-      homeConfigurations = {
-        myprofile = home-manager.lib.homeManagerConfiguration { 
-          inherit pkgs; 
-          modules = [ ./home.nix ];
+      pkgs = nixpkgs.legacyPackages.${system};
+    in
+      {
+        homeConfigurations."srunnels" = home-manager.lib.homeManagerConfiguration {
+          inherit pkgs;
+
+          # Specify your home configuration modules here, for example,
+          # the path to your home.nix.
+          modules = [
+            inputs.nix-doom-emacs-unstraightened.homeModule
+            ./home.nix
+          ];
+          extraSpecialArgs = { inherit inputs; };
+
+          # Optionally use extraSpecialArgs
+          # to pass through arguments to home.nix
         };
       };
-
-    };
 }

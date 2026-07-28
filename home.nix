@@ -1,78 +1,133 @@
-{ lib, pkgs, ... }:
+{ config, pkgs, ... }:
 let
   editor = "emacs";
 in {
-  imports = [ ./zsh.nix ];
-  home = {
-    packages = with pkgs; [
-      # Editor(s)
-      emacs
+  # Home Manager needs a bit of information about you and the paths it should
+  # manage.
+  home.username = "srunnels";
+  home.homeDirectory = "/home/srunnels";
 
-      # Emacs dependencies
-      aspell
-      aspellDicts.en
-      aspellDicts.en-computers
+  # This value determines the Home Manager release that your configuration is
+  # compatible with. This helps avoid breakage when a new Home Manager release
+  # introduces backwards incompatible changes.
+  #
+  # You should not change this value, even if you update Home Manager. If you do
+  # want to update the value, then make sure to first check the Home Manager
+  # release notes.
+  home.stateVersion = "26.05"; # Please read the comment before changing.
 
-      # TODO Fonts
-      # TODO Latex
+  # The home.packages option allows you to install Nix packages into your
+  # environment.
+  home.packages = with pkgs; [
+    # # Adds the 'hello' command to your environment. It prints a friendly
+    # # "Hello, world!" when run.
+    # pkgs.hello
+    btop
+    # # It is sometimes useful to fine-tune packages, for example, by applying
+    # # overrides. You can do that directly here, just don't forget the
+    # # parentheses. Maybe you want to install Nerd Fonts with a limited number of
 
-      # Core
-      gnumake
+    # # You can also create simple shell scripts directly inside your
+    # # configuration. For example, this adds a command 'my-hello' to your
+    # # environment:
+    # (pkgs.writeShellScriptBin "my-hello" ''
+    #   echo "Hello, ${config.home.username}!"
+    # '')
+    pass
+    pass-git-helper
+  ];
 
-      # Authentication
-      gnupg
-      pass
+  # Home Manager is pretty good at managing dotfiles. The primary way to manage
+  # plain files is through 'home.file'.
+  home.file = {
+    # # Building this configuration will create a copy of 'dotfiles/screenrc' in
+    # # the Nix store. Activating the configuration will then make '~/.screenrc' a
+    # # symlink to the Nix store copy.
+    # ".screenrc".source = dotfiles/screenrc;
 
-      # CLI
-      fd
-      fzf
-      file
-      man-pages
-      man-pages-posix
-      ripgrep
-      unzip
-      zip
-      tree
-      sshfs
-      
-      # Python
-      python3
-
-      # Python Utils
-      black
-      isort
-      mypy
-
-      # Language Servers
-      pyright
-      nixd
-      # TODO complete language servers
-      # yaml-language-server
-      # bash-language-server
-      # dockerfile-language-server
-    ];
-
-
-    # TODO - Expand upon this.
-    #home.file.".gnupg/config".source = ./files/gnupg/config;
-    # Probably more accurate
-    #file.".gnupg/config".source = ./files/gnupg/config;
-
-    username = "srunnels";
-    homeDirectory = "/home/srunnels";
-    sessionVariables = {
-      EDITOR = "${editor}";
-      PATH = "$HOME/.local/bin:$PATH";
-    };
-    stateVersion = "26.05";
+    # # You can also set the file content immediately.
+    # ".gradle/gradle.properties".text = ''
+    #   org.gradle.console=verbose
+    #   org.gradle.daemon.idletimeout=3600000
+    # '';
   };
-  programs.direnv = { enable = true; };
 
+  # Home Manager can also manage your environment variables through
+  # 'home.sessionVariables'. These will be explicitly sourced when using a
+  # shell provided by Home Manager. If you don't want to manage your shell
+  # through Home Manager then you have to manually source 'hm-session-vars.sh'
+  # located at either
+  #
+  #  ~/.nix-profile/etc/profile.d/hm-session-vars.sh
+  #
+  # or
+  #
+  #  ~/.local/state/nix/profiles/profile/etc/profile.d/hm-session-vars.sh
+  #
+  # or
+  #
+  #  /etc/profiles/per-user/srunnels/etc/profile.d/hm-session-vars.sh
+  #
+  home.sessionVariables = {
+    EDITOR = "${editor}";
+    PATH = "$HOME/.local/bin:$PATH";
+    YUBIKEY_PERSONAL_CARD = "D2760001240100000006332790270000";
+    GPG_ENCRYPT_PERSONAL = "0xA2A8C9FF810DF9DC";
+  };
+
+  # Let Home Manager install and manage itself.
+  programs.home-manager.enable = true;
+
+  # GnuPG
+  # https://mynixos.com/home-manager/options/programs.gpg
+  programs.gpg = {
+    enable = true;
+  };
+
+  # The gpg agent
+  services.gpg-agent = {
+    enable = true;
+    defaultCacheTtl = 60; #86400;
+    defaultCacheTtlSsh = 60; #86400;
+    maxCacheTtl = 120; #86400;
+    maxCacheTtlSsh = 120; #86400;
+    enableSshSupport = true;
+    enableScDaemon = true;
+    pinentry.package = pkgs.pinentry-gnome3;
+    # pinentry.program = "pinentry-wayprompt";
+    extraConfig = ''
+      allow-loopback-pinentry
+      ttyname $GPG_TTY
+    '';
+  };
+  # Pinentry
+  # programs.pinentry-
+  
+  # SSH
+  # https://mynixos.com/home-manager/options/programs.ssh
+  programs.ssh = {
+    enable = true;
+    enableDefaultConfig = false;
+
+    settings = {
+      "*" = {
+        compression = true;
+      };
+      Autarch = {
+        hostname = "192.168.1.25";
+        port = 22;
+        identityFile = "~/.ssh/id_rsa_yubikey_personal.pub";
+      };
+    };
+    
+  };
+  
+  # Git
   programs.git = {
     enable = true;
     package = pkgs.gitFull;
-    # signging.key = TODO
-    # signging.signByDefault = TODO
+    signing.key = "0x69DD8D95BD8837D7";
+    signing.signByDefault = true;
     # TODO - pass helper
     settings = {
       user.email = "srunnels@gmail.com";
@@ -81,45 +136,20 @@ in {
 	    rerere = { enabled = "true"; };
 	    rebase = { autoSquash = "true"; };
 	    github = { user = "srunnels"; };
+      credential.helper = "${pkgs.pass-git-helper}/bin/pass-git-helper";
     };
 
     ignores = [
       "*~"
     ];
+    # userName = "Scott Runnels";
+    # userEmail = "srunnels@gmail.com";
   };
-  # https://mynixos.com/home-manager/options/programs.gpg
-  programs.gpg.enable = true;
-  # https://mynixos.com/home-manager/options/programs.ssh
-  programs.ssh = {
-    enable = true;
-    enableDefaultConfig = false;
-
-    # *.forwardAgent = true;
-    # TODO Not sure what to do with AddKeysToAgent
-    # extraConfig = ''
-    # AddKeysToAgent yes
-    # '';
-    
-    settings = {
-      "*" = {
-	      compression = true;
-	    };
-      "Autarch" = {
-	      hostname = "192.168.1.25";
-	      port = 22;
-	      # identifyFile = "~/.ssh/id" # TODO
-	    };
-    };
-  };
-
-  services.gpg-agent = {
-    enable = true;
-    defaultCacheTtl = 86400;
-    defaultCacheTtlSsh = 86400;
-    maxCacheTtl = 86400;
-    maxCacheTtlSsh = 86400;
-    enableSshSupport = true;
-    enableScDaemon = true;
-    extraConfig = "allow-loopback-pinentry";
-  };
+  
+  imports = [ modules/fonts/fonts.nix
+              modules/shell/zsh.nix
+              modules/editors/emacs.nix
+              modules/shell/tmux.nix
+              modules/shell/direnv.nix
+            ];
 }

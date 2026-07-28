@@ -9,7 +9,8 @@
     enableCompletion = true;
     shellAliases = {
       ll = "ls -lha";
-      ls = "ls --color=auto"
+      ls = "ls --color=auto";
+      unlock_personal = "gpg-connect-agent 'scd checkpin '$YUBIKEY_PERSONAL_CARD'' /bye";
         # sl = "exa";
         # ls = "exa";
         # l = "exa -l";

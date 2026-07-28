@@ -13,7 +13,7 @@
          plugin = tmuxPlugins.sensible; 
         }
         {
-         plugin = tmuxPlugins.tpm; 
+         plugin = tmuxPlugins.pass; 
         }
         {
          plugin = tmuxPlugins.gruvbox; 
@@ -23,10 +23,6 @@
       set-option -g prefix C-t
       set-option -s set-clipboard on
       set -g allow-passthrough on
-
-      # Initialize TMUX plugin manager (keep this line at the very bottom of tmux.conf)
-      run -b '~/.tmux/plugins/tpm/tpm'
-
     '';
   };
 }

@@ -94,14 +94,11 @@ in {
     enableSshSupport = true;
     enableScDaemon = true;
     pinentry.package = pkgs.pinentry-gnome3;
-    # pinentry.program = "pinentry-wayprompt";
     extraConfig = ''
       allow-loopback-pinentry
       ttyname $GPG_TTY
     '';
   };
-  # Pinentry
-  # programs.pinentry-
   
   # SSH
   # https://mynixos.com/home-manager/options/programs.ssh
@@ -148,6 +145,8 @@ in {
   
   imports = [ modules/fonts/fonts.nix
               modules/shell/zsh.nix
+              modules/shell/fzf.nix
+              #modules/shell/eza.nix
               modules/editors/emacs.nix
               modules/shell/tmux.nix
               modules/shell/direnv.nix
